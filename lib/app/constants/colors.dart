@@ -10,4 +10,5 @@ class AppColors {
   static Color lightbluecolor = Color.fromARGB(216, 75, 60, 241);
   static Color whitecolor = Color.fromARGB(255, 255, 255, 255);
   static Color greycolor = Color.fromARGB(255, 146, 146, 146);
+  static Color greencolor = Color.fromARGB(255, 72, 134, 64);
 }
