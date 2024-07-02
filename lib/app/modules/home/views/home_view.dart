@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo_app/app/constants/app_config.dart';
@@ -10,6 +11,12 @@ class Home extends StatelessWidget {
   final homeController = Get.isRegistered<HomeController>()
       ? Get.find<HomeController>()
       : Get.put(HomeController());
+
+  final _formkey = GlobalKey<FormState>();
+
+  TimeOfDay selectedTime = TimeOfDay.now();
+  final TimePickerController _timePickerController =
+      Get.put(TimePickerController());
 
   @override
   Widget build(BuildContext context) {
@@ -120,214 +127,232 @@ class Home extends StatelessWidget {
                       padding: EdgeInsets.only(
                           bottom: MediaQuery.of(context).viewInsets.bottom),
                       child: Container(
-                        height: appConfig.deviceHeight(48),
+                        height: appConfig.deviceHeight(55),
                         color: AppColors.backgroundColor,
                         child: Column(
                           children: [
-                            Padding(
-                              padding: EdgeInsets.all(appConfig.rWP(4)),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Title',
-                                    style: TextStyle(
-                                        color: AppColors.blackColor,
-                                        fontSize: appConfig.textSizeScale(20),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(
-                                    height: appConfig.deviceHeight(2),
-                                  ),
-                                  Container(
-                                    width: appConfig.deviceWidth(90),
-                                    padding: EdgeInsets.only(
-                                      left: appConfig.deviceWidth(3),
-                                    ),
-                                    decoration: BoxDecoration(
-                                        color: AppColors.greycolor,
-                                        borderRadius: BorderRadius.circular(6)),
-                                    child: TextFormField(
-                                      cursorColor: AppColors.primaryColor,
-                                      controller:
-                                          homeController.titleController,
-                                      keyboardType: TextInputType.name,
-                                      decoration: InputDecoration(
-                                          hintText: 'title',
-                                          border: InputBorder.none,
-                                          hintStyle: TextStyle(
-                                            fontSize:
-                                                appConfig.textSizeScale(15),
-                                            color: AppColors.whitecolor,
-                                          ),
-                                          alignLabelWithHint: true),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: appConfig.deviceHeight(2),
-                                  ),
-                                  Text(
-                                    'Description',
-                                    style: TextStyle(
-                                        color: AppColors.blackColor,
-                                        fontSize: appConfig.textSizeScale(20),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(
-                                    height: appConfig.deviceHeight(2),
-                                  ),
-                                  Container(
-                                    width: appConfig.deviceWidth(90),
-                                    padding: EdgeInsets.only(
-                                      left: appConfig.deviceWidth(3),
-                                    ),
-                                    decoration: BoxDecoration(
-                                        color: AppColors.greycolor,
-                                        borderRadius: BorderRadius.circular(6)),
-                                    child: TextFormField(
-                                      cursorColor: AppColors.primaryColor,
-                                      controller:
-                                          homeController.descriptionController,
-                                      keyboardType: TextInputType.name,
-                                      decoration: InputDecoration(
-                                          hintText: 'Description',
-                                          border: InputBorder.none,
-                                          hintStyle: TextStyle(
-                                            fontSize:
-                                                appConfig.textSizeScale(15),
-                                            color: AppColors.whitecolor,
-                                          ),
-                                          alignLabelWithHint: true),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: appConfig.deviceHeight(2),
-                                  ),
-                                  Text(
-                                    'Time',
-                                    style: TextStyle(
-                                        color: AppColors.blackColor,
-                                        fontSize: appConfig.textSizeScale(20),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(
-                                    height: appConfig.deviceHeight(2),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'minute',
-                                        style: TextStyle(
+                            Form(
+                              key: _formkey,
+                              child: Padding(
+                                padding: EdgeInsets.all(appConfig.rWP(4)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Title',
+                                      style: TextStyle(
                                           color: AppColors.blackColor,
                                           fontSize: appConfig.textSizeScale(20),
-                                        ),
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(
+                                      height: appConfig.deviceHeight(2),
+                                    ),
+                                    Container(
+                                      width: appConfig.deviceWidth(90),
+                                      padding: EdgeInsets.only(
+                                        left: appConfig.deviceWidth(3),
                                       ),
-                                      SizedBox(
-                                        width: appConfig.deviceWidth(1),
-                                      ),
-                                      Container(
-                                        width: appConfig.deviceWidth(10),
-                                        height: appConfig.deviceHeight(4),
-                                        padding: EdgeInsets.only(
-                                          left: appConfig.deviceWidth(3),
-                                        ),
-                                        decoration: BoxDecoration(
-                                            color: AppColors.greycolor,
-                                            borderRadius:
-                                                BorderRadius.circular(6)),
-                                        child: TextFormField(
-                                          cursorColor: AppColors.primaryColor,
-                                          controller:
-                                              homeController.timeController,
-                                          keyboardType: TextInputType.number,
-                                          decoration: InputDecoration(
+                                      decoration: BoxDecoration(
+                                          color: AppColors.greycolor,
+                                          borderRadius:
+                                              BorderRadius.circular(6)),
+                                      child: TextFormField(
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please enter a title';
+                                          }
+                                          return null;
+                                        },
+                                        cursorColor: AppColors.primaryColor,
+                                        controller:
+                                            homeController.titleController,
+                                        keyboardType: TextInputType.name,
+                                        decoration: InputDecoration(
+                                            hintText: 'title',
                                             border: InputBorder.none,
-                                          ),
-                                        ),
+                                            hintStyle: TextStyle(
+                                              fontSize:
+                                                  appConfig.textSizeScale(15),
+                                              color: AppColors.whitecolor,
+                                            ),
+                                            alignLabelWithHint: true),
                                       ),
-                                      SizedBox(
-                                        width: appConfig.deviceWidth(4),
-                                      ),
-                                      Text(
-                                        'second',
-                                        style: TextStyle(
+                                    ),
+                                    SizedBox(
+                                      height: appConfig.deviceHeight(2),
+                                    ),
+                                    Text(
+                                      'Description',
+                                      style: TextStyle(
                                           color: AppColors.blackColor,
                                           fontSize: appConfig.textSizeScale(20),
-                                        ),
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(
+                                      height: appConfig.deviceHeight(2),
+                                    ),
+                                    Container(
+                                      width: appConfig.deviceWidth(90),
+                                      padding: EdgeInsets.only(
+                                        left: appConfig.deviceWidth(3),
                                       ),
-                                      SizedBox(
-                                        width: appConfig.deviceWidth(1),
-                                      ),
-                                      Container(
-                                        width: appConfig.deviceWidth(10),
-                                        height: appConfig.deviceHeight(4),
-                                        padding: EdgeInsets.only(
-                                          left: appConfig.deviceWidth(3),
-                                        ),
-                                        decoration: BoxDecoration(
-                                            color: AppColors.greycolor,
-                                            borderRadius:
-                                                BorderRadius.circular(6)),
-                                        child: TextFormField(
-                                          cursorColor: AppColors.primaryColor,
-                                          controller:
-                                              homeController.timeController,
-                                          keyboardType: TextInputType.number,
-                                          decoration: InputDecoration(
+                                      decoration: BoxDecoration(
+                                          color: AppColors.greycolor,
+                                          borderRadius:
+                                              BorderRadius.circular(6)),
+                                      child: TextFormField(
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please enter a description';
+                                          }
+                                          return null;
+                                        },
+                                        cursorColor: AppColors.primaryColor,
+                                        controller: homeController
+                                            .descriptionController,
+                                        keyboardType: TextInputType.name,
+                                        decoration: InputDecoration(
+                                            hintText: 'Description',
                                             border: InputBorder.none,
+                                            hintStyle: TextStyle(
+                                              fontSize:
+                                                  appConfig.textSizeScale(15),
+                                              color: AppColors.whitecolor,
+                                            ),
+                                            alignLabelWithHint: true),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: appConfig.deviceHeight(2),
+                                    ),
+                                    Row(
+                                      children: [
+                                        MaterialButton(
+                                          color: AppColors.blackColor,
+                                          onPressed: () async {
+                                            final Duration? duration =
+                                                await showCupertinoDurationPicker(
+                                              context: context,
+                                              initialDuration:
+                                                  _timePickerController
+                                                      .selectedDuration.value,
+                                            );
+                                            if (duration != null) {
+                                              _timePickerController
+                                                  .updateSelectedDuration(
+                                                      duration);
+                                            }
+                                          },
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(40.0),
+                                          ),
+                                          height: appConfig.deviceHeight(4),
+                                          minWidth: appConfig.deviceWidth(25),
+                                          child: Text(
+                                            'SELECT TIME',
+                                            style: TextStyle(
+                                                color: AppColors.whitecolor,
+                                                fontSize: appConfig
+                                                    .textSizeScale(15)),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: appConfig.deviceHeight(2),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      MaterialButton(
-                                        color: AppColors.greencolor,
-                                        onPressed: () {},
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(40.0),
+                                        SizedBox(
+                                          width: appConfig.deviceWidth(4),
                                         ),
-                                        height: appConfig.deviceHeight(5),
-                                        minWidth: appConfig.deviceWidth(30),
-                                        child: Text(
-                                          'SAVE',
-                                          style: TextStyle(
-                                              color: AppColors.whitecolor,
+                                        Obx(
+                                          () => Text(
+                                            "${_timePickerController.selectedDuration.value.inMinutes}:${(_timePickerController.selectedDuration.value.inSeconds % 60).toString().padLeft(2, '0')}",
+                                            style: TextStyle(
                                               fontSize:
-                                                  appConfig.textSizeScale(15)),
+                                                  appConfig.textSizeScale(20),
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.greycolor,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: appConfig.deviceHeight(2),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        MaterialButton(
+                                          color: AppColors.greencolor,
+                                          onPressed: () {
+                                            FocusScope.of(context).unfocus();
+                                            if (_formkey.currentState!
+                                                .validate()) {
+                                              if (_timePickerController
+                                                      .selectedDuration
+                                                      .value
+                                                      .inMinutes >
+                                                  5) {
+                                                Get.snackbar(
+                                                  'Error',
+                                                  'Please select a duration of 5 minutes or less',
+                                                  snackPosition:
+                                                      SnackPosition.BOTTOM,
+                                                  backgroundColor: Colors.red,
+                                                  colorText: Colors.white,
+                                                );
+                                                return;
+                                              }
+                                              Get.snackbar(
+                                                'Success',
+                                                'List added successful',
+                                                snackPosition:
+                                                    SnackPosition.BOTTOM,
+                                                backgroundColor: Colors.green,
+                                                colorText: Colors.white,
+                                              );
+                                            }
+                                          },
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(40.0),
+                                          ),
+                                          height: appConfig.deviceHeight(5),
+                                          minWidth: appConfig.deviceWidth(30),
+                                          child: Text(
+                                            'SAVE',
+                                            style: TextStyle(
+                                                color: AppColors.whitecolor,
+                                                fontSize: appConfig
+                                                    .textSizeScale(15)),
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(
-                                        width: appConfig.deviceWidth(5),
-                                      ),
-                                      MaterialButton(
-                                        color: AppColors.redColor,
-                                        onPressed: () {},
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(40.0),
+                                        SizedBox(
+                                          width: appConfig.deviceWidth(5),
                                         ),
-                                        height: appConfig.deviceHeight(5),
-                                        minWidth: appConfig.deviceWidth(30),
-                                        child: Text(
-                                          'CANCEL',
-                                          style: TextStyle(
-                                              color: AppColors.whitecolor,
-                                              fontSize:
-                                                  appConfig.textSizeScale(15)),
+                                        MaterialButton(
+                                          color: AppColors.redColor,
+                                          onPressed: () {
+                                            Get.back();
+                                          },
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(40.0),
+                                          ),
+                                          height: appConfig.deviceHeight(5),
+                                          minWidth: appConfig.deviceWidth(30),
+                                          child: Text(
+                                            'CANCEL',
+                                            style: TextStyle(
+                                                color: AppColors.whitecolor,
+                                                fontSize: appConfig
+                                                    .textSizeScale(15)),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  )
-                                ],
+                                      ],
+                                    )
+                                  ],
+                                ),
                               ),
                             )
                           ],
@@ -345,4 +370,47 @@ class Home extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<Duration?> showCupertinoDurationPicker({
+  required BuildContext context,
+  required Duration initialDuration,
+}) {
+  return showDialog<Duration>(
+    context: context,
+    builder: (BuildContext context) {
+      Duration selectedDuration = initialDuration;
+      return CupertinoAlertDialog(
+        title: Text('Select Time'),
+        content: Container(
+          height: 200,
+          child: CupertinoTimerPicker(
+            mode: CupertinoTimerPickerMode.ms,
+            initialTimerDuration: initialDuration,
+            onTimerDurationChanged: (Duration duration) {
+              if (duration.inMinutes <= 5) {
+                selectedDuration = duration;
+              } else {
+                selectedDuration = Duration(minutes: 5);
+              }
+            },
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () {
+              Navigator.of(context).pop(null);
+            },
+            child: Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              Navigator.of(context).pop(selectedDuration);
+            },
+            child: Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
 }
