@@ -4,19 +4,22 @@ import 'package:get/get.dart';
 import 'package:todo_app/app/constants/app_config.dart';
 import 'package:todo_app/app/constants/colors.dart';
 import 'package:todo_app/app/modules/home/controllers/home_controller.dart';
+import 'package:todo_app/app/services/db_helper.dart';
 
 class Home extends StatelessWidget {
   Home({super.key});
 
-  final homeController = Get.isRegistered<HomeController>()
-      ? Get.find<HomeController>()
-      : Get.put(HomeController());
+  final homeController = Get.isRegistered<JournalsController>()
+      ? Get.find<JournalsController>()
+      : Get.put(JournalsController());
 
   final _formkey = GlobalKey<FormState>();
 
   TimeOfDay selectedTime = TimeOfDay.now();
   final TimePickerController _timePickerController =
       Get.put(TimePickerController());
+
+  final JournalsController controller = Get.put(JournalsController());
 
   @override
   Widget build(BuildContext context) {
@@ -52,69 +55,90 @@ class Home extends StatelessWidget {
             SizedBox(
               height: appConfig.deviceHeight(2),
             ),
-            Container(
-              height: appConfig.deviceHeight(12),
-              width: appConfig.deviceWidth(100),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: AppColors.backgroundColor,
-                  border: Border.all(color: AppColors.blackColor)),
-              child: Padding(
-                padding: EdgeInsets.only(left: appConfig.rWP(2)),
-                child: Padding(
-                  padding: EdgeInsets.all(appConfig.rWP(2)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'TITLE:',
-                              style: TextStyle(
-                                  color: AppColors.blackColor,
-                                  fontSize: appConfig.textSizeScale(15),
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              'STATUS:',
-                              style: TextStyle(
-                                color: AppColors.blackColor,
-                                fontSize: appConfig.textSizeScale(10),
+            GetBuilder<JournalsController>(
+              builder: (_) {
+                if (controller.isLoading.value) {
+                  return Center(child: CircularProgressIndicator());
+                } else {
+                  return ListView.builder(
+                      itemCount: controller.journals.length,
+                      itemBuilder: (context, index) {
+                        final journal = controller.journals[index];
+                        return Container(
+                          height: appConfig.deviceHeight(12),
+                          width: appConfig.deviceWidth(100),
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: AppColors.backgroundColor,
+                              border: Border.all(color: AppColors.blackColor)),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: appConfig.rWP(2)),
+                            child: Padding(
+                              padding: EdgeInsets.all(appConfig.rWP(2)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'TITLE:',
+                                          style: TextStyle(
+                                              color: AppColors.blackColor,
+                                              fontSize:
+                                                  appConfig.textSizeScale(15),
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          'STATUS:',
+                                          style: TextStyle(
+                                            color: AppColors.blackColor,
+                                            fontSize:
+                                                appConfig.textSizeScale(10),
+                                          ),
+                                        ),
+                                        IconButton(
+                                            onPressed: () {
+                                              DatabaseHelper.deleteItem(
+                                                  journal['id']);
+                                            },
+                                            icon: Icon(
+                                              Icons.delete_outline,
+                                              color: AppColors.greycolor,
+                                              size: appConfig.deviceWidth(6),
+                                            ))
+                                      ]),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'DESCRIPTION:',
+                                        style: TextStyle(
+                                          color: AppColors.blackColor,
+                                          fontSize: appConfig.textSizeScale(10),
+                                        ),
+                                      ),
+                                      Text(
+                                        'TIMER:',
+                                        style: TextStyle(
+                                          color: AppColors.blackColor,
+                                          fontSize: appConfig.textSizeScale(10),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                            IconButton(
-                                onPressed: () {},
-                                icon: Icon(
-                                  Icons.delete_outline,
-                                  color: AppColors.greycolor,
-                                  size: appConfig.deviceWidth(6),
-                                ))
-                          ]),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'DESCRIPTION:',
-                            style: TextStyle(
-                              color: AppColors.blackColor,
-                              fontSize: appConfig.textSizeScale(10),
-                            ),
                           ),
-                          Text(
-                            'TIMER:',
-                            style: TextStyle(
-                              color: AppColors.blackColor,
-                              fontSize: appConfig.textSizeScale(10),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                        );
+                      });
+                }
+              },
             ),
             const Spacer(),
             FloatingActionButton(
@@ -284,7 +308,7 @@ class Home extends StatelessWidget {
                                       children: [
                                         MaterialButton(
                                           color: AppColors.greencolor,
-                                          onPressed: () {
+                                          onPressed: () async {
                                             FocusScope.of(context).unfocus();
                                             if (_formkey.currentState!
                                                 .validate()) {
@@ -303,6 +327,14 @@ class Home extends StatelessWidget {
                                                 );
                                                 return;
                                               }
+
+                                              final int id = await DatabaseHelper
+                                                  .createItem(
+                                                      homeController
+                                                          .titleController.text,
+                                                      homeController
+                                                          .descriptionController
+                                                          .text);
                                               Get.snackbar(
                                                 'Success',
                                                 'List added successful',
