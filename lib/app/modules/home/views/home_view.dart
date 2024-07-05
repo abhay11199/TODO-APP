@@ -4,88 +4,111 @@ import 'package:get/get.dart';
 import 'package:todo_app/app/constants/app_config.dart';
 import 'package:todo_app/app/constants/colors.dart';
 import 'package:todo_app/app/modules/home/controllers/home_controller.dart';
-import 'package:todo_app/app/services/db_helper.dart';
+import 'package:todo_app/app/modules/todo_bottom_sheet.dart';
+import 'package:todo_app/app/routes/app_pages.dart';
 
 class Home extends StatelessWidget {
   Home({super.key});
 
-  final homeController = Get.isRegistered<JournalsController>()
-      ? Get.find<JournalsController>()
-      : Get.put(JournalsController());
-
-  final _formkey = GlobalKey<FormState>();
-
-  TimeOfDay selectedTime = TimeOfDay.now();
-  final TimePickerController _timePickerController =
-      Get.put(TimePickerController());
-
-  final JournalsController controller = Get.put(JournalsController());
+  final homeController = Get.isRegistered<HomeController>()
+      ? Get.find<HomeController>()
+      : Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
     AppConfig appConfig = AppConfig(context);
-    return Scaffold(
-      backgroundColor: AppColors.whitecolor,
-      appBar: AppBar(
-        backgroundColor: AppColors.blackColor,
-        title: Text(
-          'TODO LIST',
-          style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.whitecolor,
-              fontSize: appConfig.textSizeScale(18)),
+    if (Get.arguments != null) {
+      var args = Get.arguments;
+      print(args);
+      homeController.titleController.value.text = args.title;
+      homeController.descriptionController.value.text = args.description;
+      homeController.selectedTime.value = args.time;
+      homeController.statusController.value = args.status;
+    }
+
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: AppColors.whitecolor,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (BuildContext context) {
+                return const AddTodoBttomSheet(
+                  forEdit: false,
+                );
+              },
+            );
+          },
+          backgroundColor: AppColors.blackColor,
+          child: const Icon(Icons.add),
         ),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(appConfig.rWP(4)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(right: appConfig.rWP(65)),
-              child: Text(
-                'ADD TASK',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: appConfig.textSizeScale(20),
+        appBar: AppBar(
+          backgroundColor: AppColors.blackColor,
+          title: Text(
+            'TODO LIST',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.whitecolor,
+                fontSize: appConfig.textSizeScale(18)),
+          ),
+        ),
+        body: Padding(
+          padding: EdgeInsets.all(appConfig.rWP(4)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(right: appConfig.rWP(64)),
+                child: Text(
+                  'ADD TASK',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: appConfig.textSizeScale(20),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(
-              height: appConfig.deviceHeight(2),
-            ),
-            GetBuilder<JournalsController>(
-              builder: (_) {
-                if (controller.isLoading.value) {
-                  return Center(child: CircularProgressIndicator());
-                } else {
+              SizedBox(
+                height: appConfig.deviceHeight(2),
+              ),
+              Expanded(
+                child: GetBuilder<HomeController>(builder: (controller) {
                   return ListView.builder(
-                      itemCount: controller.journals.length,
-                      itemBuilder: (context, index) {
-                        final journal = controller.journals[index];
-                        return Container(
-                          height: appConfig.deviceHeight(12),
-                          width: appConfig.deviceWidth(100),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              color: AppColors.backgroundColor,
-                              border: Border.all(color: AppColors.blackColor)),
-                          child: Padding(
-                            padding: EdgeInsets.only(left: appConfig.rWP(2)),
+                    itemCount: controller.todos.length,
+                    shrinkWrap: true,
+                    itemBuilder: (context, i) {
+                      var todo = controller.todos[i];
+                      return Padding(
+                        padding: EdgeInsets.only(top: appConfig.rHP(1)),
+                        child: GestureDetector(
+                          onTap: () {
+                            Get.toNamed(Routes.DETAIL_SCREEN, arguments: todo);
+                          },
+                          child: Container(
+                            height: appConfig.deviceHeight(12),
+                            width: appConfig.deviceWidth(100),
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                color: AppColors.backgroundColor,
+                                border:
+                                    Border.all(color: AppColors.blackColor)),
                             child: Padding(
-                              padding: EdgeInsets.all(appConfig.rWP(2)),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Row(
+                              padding: EdgeInsets.only(left: appConfig.rWP(2)),
+                              child: Padding(
+                                padding: EdgeInsets.all(appConfig.rWP(2)),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          'TITLE:',
+                                          todo.title,
                                           style: TextStyle(
                                               color: AppColors.blackColor,
                                               fontSize:
@@ -93,7 +116,7 @@ class Home extends StatelessWidget {
                                               fontWeight: FontWeight.bold),
                                         ),
                                         Text(
-                                          'STATUS:',
+                                          "Status: in progress",
                                           style: TextStyle(
                                             color: AppColors.blackColor,
                                             fontSize:
@@ -101,303 +124,52 @@ class Home extends StatelessWidget {
                                           ),
                                         ),
                                         IconButton(
-                                            onPressed: () {
-                                              DatabaseHelper.deleteItem(
-                                                  journal['id']);
-                                            },
-                                            icon: Icon(
-                                              Icons.delete_outline,
-                                              color: AppColors.greycolor,
-                                              size: appConfig.deviceWidth(6),
-                                            ))
-                                      ]),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'DESCRIPTION:',
-                                        style: TextStyle(
-                                          color: AppColors.blackColor,
-                                          fontSize: appConfig.textSizeScale(10),
-                                        ),
-                                      ),
-                                      Text(
-                                        'TIMER:',
-                                        style: TextStyle(
-                                          color: AppColors.blackColor,
-                                          fontSize: appConfig.textSizeScale(10),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      });
-                }
-              },
-            ),
-            const Spacer(),
-            FloatingActionButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (BuildContext context) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom),
-                      child: Container(
-                        height: appConfig.deviceHeight(55),
-                        color: AppColors.backgroundColor,
-                        child: Column(
-                          children: [
-                            Form(
-                              key: _formkey,
-                              child: Padding(
-                                padding: EdgeInsets.all(appConfig.rWP(4)),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Title',
-                                      style: TextStyle(
-                                          color: AppColors.blackColor,
-                                          fontSize: appConfig.textSizeScale(20),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(
-                                      height: appConfig.deviceHeight(2),
-                                    ),
-                                    Container(
-                                      width: appConfig.deviceWidth(90),
-                                      padding: EdgeInsets.only(
-                                        left: appConfig.deviceWidth(3),
-                                      ),
-                                      decoration: BoxDecoration(
-                                          color: AppColors.greycolor,
-                                          borderRadius:
-                                              BorderRadius.circular(6)),
-                                      child: TextFormField(
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Please enter a title';
-                                          }
-                                          return null;
-                                        },
-                                        cursorColor: AppColors.primaryColor,
-                                        controller:
-                                            homeController.titleController,
-                                        keyboardType: TextInputType.name,
-                                        decoration: InputDecoration(
-                                            hintText: 'title',
-                                            border: InputBorder.none,
-                                            hintStyle: TextStyle(
-                                              fontSize:
-                                                  appConfig.textSizeScale(15),
-                                              color: AppColors.whitecolor,
-                                            ),
-                                            alignLabelWithHint: true),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: appConfig.deviceHeight(2),
-                                    ),
-                                    Text(
-                                      'Description',
-                                      style: TextStyle(
-                                          color: AppColors.blackColor,
-                                          fontSize: appConfig.textSizeScale(20),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(
-                                      height: appConfig.deviceHeight(2),
-                                    ),
-                                    Container(
-                                      width: appConfig.deviceWidth(90),
-                                      padding: EdgeInsets.only(
-                                        left: appConfig.deviceWidth(3),
-                                      ),
-                                      decoration: BoxDecoration(
-                                          color: AppColors.greycolor,
-                                          borderRadius:
-                                              BorderRadius.circular(6)),
-                                      child: TextFormField(
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Please enter a description';
-                                          }
-                                          return null;
-                                        },
-                                        cursorColor: AppColors.primaryColor,
-                                        controller: homeController
-                                            .descriptionController,
-                                        keyboardType: TextInputType.name,
-                                        decoration: InputDecoration(
-                                            hintText: 'Description',
-                                            border: InputBorder.none,
-                                            hintStyle: TextStyle(
-                                              fontSize:
-                                                  appConfig.textSizeScale(15),
-                                              color: AppColors.whitecolor,
-                                            ),
-                                            alignLabelWithHint: true),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: appConfig.deviceHeight(2),
-                                    ),
-                                    Row(
-                                      children: [
-                                        MaterialButton(
-                                          color: AppColors.blackColor,
-                                          onPressed: () async {
-                                            final Duration? duration =
-                                                await showCupertinoDurationPicker(
-                                              context: context,
-                                              initialDuration:
-                                                  _timePickerController
-                                                      .selectedDuration.value,
-                                            );
-                                            if (duration != null) {
-                                              _timePickerController
-                                                  .updateSelectedDuration(
-                                                      duration);
-                                            }
+                                          onPressed: () {
+                                            homeController.deleteTodo(todo);
                                           },
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(40.0),
-                                          ),
-                                          height: appConfig.deviceHeight(4),
-                                          minWidth: appConfig.deviceWidth(25),
-                                          child: Text(
-                                            'SELECT TIME',
-                                            style: TextStyle(
-                                                color: AppColors.whitecolor,
-                                                fontSize: appConfig
-                                                    .textSizeScale(15)),
+                                          icon: Icon(
+                                            Icons.delete_outline,
+                                            color: AppColors.redColor,
+                                            size: appConfig.deviceWidth(6),
                                           ),
                                         ),
-                                        SizedBox(
-                                          width: appConfig.deviceWidth(4),
-                                        ),
-                                        Obx(
-                                          () => Text(
-                                            "${_timePickerController.selectedDuration.value.inMinutes}:${(_timePickerController.selectedDuration.value.inSeconds % 60).toString().padLeft(2, '0')}",
-                                            style: TextStyle(
-                                              fontSize:
-                                                  appConfig.textSizeScale(20),
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.greycolor,
-                                            ),
-                                          ),
-                                        )
                                       ],
-                                    ),
-                                    SizedBox(
-                                      height: appConfig.deviceHeight(2),
                                     ),
                                     Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        MaterialButton(
-                                          color: AppColors.greencolor,
-                                          onPressed: () async {
-                                            FocusScope.of(context).unfocus();
-                                            if (_formkey.currentState!
-                                                .validate()) {
-                                              if (_timePickerController
-                                                      .selectedDuration
-                                                      .value
-                                                      .inMinutes >
-                                                  5) {
-                                                Get.snackbar(
-                                                  'Error',
-                                                  'Please select a duration of 5 minutes or less',
-                                                  snackPosition:
-                                                      SnackPosition.BOTTOM,
-                                                  backgroundColor: Colors.red,
-                                                  colorText: Colors.white,
-                                                );
-                                                return;
-                                              }
-
-                                              final int id = await DatabaseHelper
-                                                  .createItem(
-                                                      homeController
-                                                          .titleController.text,
-                                                      homeController
-                                                          .descriptionController
-                                                          .text);
-                                              Get.snackbar(
-                                                'Success',
-                                                'List added successful',
-                                                snackPosition:
-                                                    SnackPosition.BOTTOM,
-                                                backgroundColor: Colors.green,
-                                                colorText: Colors.white,
-                                              );
-                                            }
-                                          },
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(40.0),
-                                          ),
-                                          height: appConfig.deviceHeight(5),
-                                          minWidth: appConfig.deviceWidth(30),
-                                          child: Text(
-                                            'SAVE',
-                                            style: TextStyle(
-                                                color: AppColors.whitecolor,
-                                                fontSize: appConfig
-                                                    .textSizeScale(15)),
+                                        Text(
+                                          todo.description,
+                                          style: TextStyle(
+                                            color: AppColors.blackColor,
+                                            fontSize:
+                                                appConfig.textSizeScale(10),
                                           ),
                                         ),
-                                        SizedBox(
-                                          width: appConfig.deviceWidth(5),
-                                        ),
-                                        MaterialButton(
-                                          color: AppColors.redColor,
-                                          onPressed: () {
-                                            Get.back();
-                                          },
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(40.0),
-                                          ),
-                                          height: appConfig.deviceHeight(5),
-                                          minWidth: appConfig.deviceWidth(30),
-                                          child: Text(
-                                            'CANCEL',
-                                            style: TextStyle(
-                                                color: AppColors.whitecolor,
-                                                fontSize: appConfig
-                                                    .textSizeScale(15)),
+                                        Text(
+                                          'Time:  ${todo.time}',
+                                          style: TextStyle(
+                                            color: AppColors.blackColor,
+                                            fontSize:
+                                                appConfig.textSizeScale(10),
                                           ),
                                         ),
                                       ],
-                                    )
+                                    ),
                                   ],
                                 ),
                               ),
-                            )
-                          ],
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                );
-              },
-              child: Icon(Icons.add),
-              backgroundColor: AppColors.blackColor,
-            )
-          ],
+                      );
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -412,36 +184,34 @@ Future<Duration?> showCupertinoDurationPicker({
     context: context,
     builder: (BuildContext context) {
       Duration selectedDuration = initialDuration;
-      return CupertinoAlertDialog(
-        title: Text('Select Time'),
-        content: Container(
-          height: 200,
-          child: CupertinoTimerPicker(
-            mode: CupertinoTimerPickerMode.ms,
-            initialTimerDuration: initialDuration,
-            onTimerDurationChanged: (Duration duration) {
-              if (duration.inMinutes <= 5) {
+      return Center(
+        child: AlertDialog(
+          title: const Text('Select Time'),
+          content: Container(
+            height: 200,
+            child: CupertinoTimerPicker(
+              mode: CupertinoTimerPickerMode.ms,
+              initialTimerDuration: initialDuration,
+              onTimerDurationChanged: (Duration duration) {
                 selectedDuration = duration;
-              } else {
-                selectedDuration = Duration(minutes: 5);
-              }
-            },
+              },
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(selectedDuration);
+              },
+              child: const Text('OK'),
+            ),
+          ],
         ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () {
-              Navigator.of(context).pop(null);
-            },
-            child: Text('Cancel'),
-          ),
-          CupertinoDialogAction(
-            onPressed: () {
-              Navigator.of(context).pop(selectedDuration);
-            },
-            child: Text('OK'),
-          ),
-        ],
       );
     },
   );

@@ -1,56 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todo_app/app/models/todo_data_model.dart';
+import 'package:todo_app/app/modules/detail/controllers/detail_controller.dart';
 import 'package:todo_app/app/services/db_helper.dart';
 
 class HomeController extends GetxController {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-  TextEditingController minuteController = TextEditingController();
-  TextEditingController secondController = TextEditingController();
-}
+  var titleController = TextEditingController().obs;
+  var descriptionController = TextEditingController().obs;
+  var todos = <TodoDataModel>[].obs;
+  var statusController = "".obs;
 
-class TimePickerController extends GetxController {
-  var selectedTime = TimeOfDay.now().obs;
+  RxInt selectedTime = 0.obs;
 
-  void updateSelectedTime(TimeOfDay time) {
-    selectedTime.value = time;
+  void add() {
+    if (selectedTime.value < 5) {
+      selectedTime.value++;
+    }
   }
 
-  Rx<Duration> selectedDuration = Duration(minutes: 0).obs;
-
-  void updateSelectedDuration(Duration duration) {
-    selectedDuration.value = duration;
+  void subtract() {
+    if (selectedTime.value > 1) {
+      selectedTime.value--;
+    }
   }
-}
 
-class JournalsController extends GetxController {
-  final RxList<Map<String, dynamic>> journals = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> itemlist = <Map<String, dynamic>>[].obs;
   final RxBool isLoading = true.obs;
-
-  var titleController = TextEditingController();
-  var descriptionController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    _refreshJournals();
+    todos.value = [];
+    super.onInit();
+    fetchTodos();
   }
 
-  // void _showForm(int? id) async {
-  //   if (id != null) {
-  //     final existingJournal =
-  //     journals.firstWhereOrNull((element) => element['id'] == id);
-  //     titleController.text = existingJournal!['title'];
-  //     descriptionController.text = existingJournal['description'];
-  //   }
-  // }
+  fetchTodos() async {
+    DatabaseHelper.db.getTodoList().then((todoList) => {
+          todos.value = todoList,
+          update(),
+        });
+  }
 
-  void _refreshJournals() async {
-    try {
-      final data = await DatabaseHelper.getItems();
-      journals.assignAll(data);
-    } finally {
-      isLoading.value = false;
+  void addTodo(TodoDataModel todo) {
+    if (todo.id != null) {
+      print("Inside add todo and id is not null ${todo.id}");
+      DatabaseHelper.db.updateTodo(todo).then((value) {
+        updateTodo(todo);
+      });
+    } else {
+      DatabaseHelper.db.insertTodo(todo).then((value) => todos.add(todo));
     }
+  }
+
+  void deleteTodo(TodoDataModel todo) {
+    DatabaseHelper.db.deleteTodo(todo.id!).then((_) => todos.remove(todo));
+    fetchTodos();
+    update();
+  }
+
+  void updateList(TodoDataModel todo) async {
+    var result = await fetchTodos();
+    if (result != null) {
+      final index = todos.indexOf(todo);
+      print(index);
+      todos[index] = todo;
+    }
+  }
+
+  void updateTodo(TodoDataModel todo) {
+    DatabaseHelper.db.updateTodo(todo).then((value) => updateList(todo));
+  }
+
+  void handleAddButton({int? id}) {
+    print(id);
+    var todo = TodoDataModel(
+      title: titleController.value.text,
+      description: descriptionController.value.text,
+      time: selectedTime.value,
+      status: id == null ? 'Todo' : statusController.value,
+    );
+
+    if (id == null) {
+      addTodo(todo);
+    } else {
+      todo.id = id;
+      updateTodo(todo);
+      if (Get.isRegistered<DetailScreenController>()) {
+        final detailScreenController = Get.find<DetailScreenController>();
+        detailScreenController.updateTodoData(todo);
+      }
+    }
+    titleController.value.text = "";
+    descriptionController.value.text = "";
+    selectedTime.value = 0;
+    statusController.value = "";
   }
 }
